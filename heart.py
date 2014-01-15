@@ -4,6 +4,7 @@ import time
 import sys, getopt
 
 class Beat:
+    timebase = 12
     def beat(self, num):
         if num <= self.timebase:
                 return num
@@ -19,11 +20,11 @@ class Beat:
         time.sleep(t/self.timebase)
 
 class Heart(Beat):
-    timebase = 12
     start_time = 0.0;
-    def __init__(self, name):
+    def __init__(self, name, timebase = 12):
         print "Class Heart activated for \"", name, "\""
         self.start_time = time.time();
+        self.timebase = timebase
 
     def set_beat(self, timebase):
         self.timebase = timebase
@@ -41,17 +42,20 @@ class Heart(Beat):
 
 def main(argv):
    count = 16
+   timebase = 12
    try:
-       opts, args = getopt.getopt(argv,"c:",["count="])
+       opts, args = getopt.getopt(argv,"c:b:",["count=", "base="])
    except getopt.GetoptError:
-       print 'test.py -c <count in base 12>'
+       print 'test.py -c <count> -b <time base>'
        sys.exit(2)
 
    for opt, arg in opts:
        if opt in ("-c", "--count"):
            count = int(arg,12)
+       if opt in ("-b", "--base"):
+            timebase = int(arg,10)
 
-   heart = Heart("I")
+   heart = Heart("I", timebase)
    heart.breath(count)
    t = heart.get_time()
 
