@@ -71,8 +71,10 @@ class Heart(Beat):
     def breath(self, num):
         for i in range(num):
             while self.active_threads >= self.processors:
-                time.sleep(.10)
+                self.print_results()
+                time.sleep(.25)
             # new thread
+            #print "Starting thread ", self.active_threads+1, " for ", i
             t = Thread(target=self.heart_beat, args=(i,))
             # get lock
             t.setDaemon(True)
@@ -82,7 +84,8 @@ class Heart(Beat):
 
         # Wait for all threads to exit
         while self.active_threads > 0:
-            time.sleep(.10)
+            self.print_results()
+            time.sleep(.25)
 
         self.print_results()
 
