@@ -11,19 +11,38 @@ import time
 import sys, getopt
 from threading import Thread
 from threading import BoundedSemaphore
+from multiprocessing import Process, Queue
 
 class Beat:
     timebase = 12
-    def beat(self, num):
-        if num <= self.timebase:
+    def beat(self, num, q = 0):
+        try:
+            if num <= self.timebase:
+                if q:
+                    q.put(num)
                 return num
 
-        retnum = 0
-        for i in range((self.timebase+2)):
-            if i <= 0:
-                continue
-            retnum += self.beat(num - i)
+            retnum = 0
+            for i in range((self.timebase+2)):
+                if i <= 0:
+                    continue
+                ret = self.beat(num - i)
+                retnum = retnum + ret
+            if q:
+                q.put(retnum)
+        except KeyboardInterrupt:
+            sys.exit(1)
         return retnum
+
+    def iam(self, num):
+        try:
+            q = Queue()
+            p = Process(target=self.beat, args=(num,q))
+            p.start()
+            p.join()
+        except KeyboardInterrupt:
+            sys.exit(1)
+        return q.get()
 
     def space(self, t):
         time.sleep(t/self.timebase)
@@ -54,7 +73,7 @@ class Heart(Beat):
         self.active_threads += 1
         self.active_sem.release()
         begin = time.time()
-        t = self.beat(i)
+        t = self.iam(i)
         msg = "%d) time %0.6f space %d" % (i, (time.time()-begin), t)
         self.results.append(msg)
         self.active_sem.acquire()
@@ -108,9 +127,13 @@ def main(argv):
        elif opt in ("-p", "--processors"):
            processors = int(arg,10)
 
-   heart = Heart("I", timebase, processors)
-   heart.breath(count)
-   t = heart.get_time()
+   try:
+        heart = Heart("I", timebase, processors)
+        heart.breath(count)
+        t = heart.get_time()
+   except KeyboardInterrupt:
+        print "Exiting, killing processes"
+        sys.exit(1)
 
    print "Life is at %f seconds" % t
 
