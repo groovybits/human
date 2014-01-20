@@ -73,10 +73,13 @@ class Heart(Beat):
         self.active_threads += 1
         self.active_sem.release()
         begin = time.time()
+
+        # separate process in thread
         t = self.iam(i)
         msg = "%d) time %0.6f space %d" % (i, (time.time()-begin), t)
-        self.results.append(msg)
+
         self.active_sem.acquire()
+        self.results.append(msg)
         self.active_threads -= 1
         self.active_sem.release()
 
@@ -91,11 +94,9 @@ class Heart(Beat):
         for i in range(num):
             while self.active_threads >= self.processors:
                 self.print_results()
-                time.sleep(.25)
+                time.sleep(.50)
             # new thread
-            #print "Starting thread ", self.active_threads+1, " for ", i
             t = Thread(target=self.heart_beat, args=(i,))
-            # get lock
             t.setDaemon(True)
             t.start()
             self.brain.append(t)
@@ -104,7 +105,7 @@ class Heart(Beat):
         # Wait for all threads to exit
         while self.active_threads > 0:
             self.print_results()
-            time.sleep(.25)
+            time.sleep(.50)
 
         self.print_results()
 
